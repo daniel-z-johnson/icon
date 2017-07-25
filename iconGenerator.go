@@ -18,7 +18,7 @@ func main() {
     flag.IntVar(&side, "side", 1024, "side to be used when generating icon")
     flag.StringVar(&bkgcString, "background", "f0f0f0", "background color of the icon in form of a hex string. e.x. 2ae9df")
     flag.StringVar(&fgString, "color", "c75c93", "coloor of the icon")
-	flag.StringVar(&outFile, "file", "file.png", "name of file for icon file")
+	flag.StringVar(&outFile, "file", "icon.png", "name of file for icon file")
     flag.Parse()
 
     background, _ := hexcolor.HexRgb24BitToColor(bkgcString)
