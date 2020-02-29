@@ -1,39 +1,50 @@
 package main
 
 import (
-	"os"
-    "fmt"
-    "flag"
-
-    "github.com/prime23/hexcolor"
+	"flag"
+	"fmt"
+	"image/color"
+	"strconv"
+	"strings"
 )
 
 func main() {
+	fmt.Println("Icon Generator start")
 
-    var bkgcString string
-    var fgString string
-    var side int
-    var outFile string
-    var numSquares int
-    var padding int
+	rgbaValue := flag.String("background", "240,240,240", "The value for the background color, in quotes comma seperated 3 or 4 values, between 0-255")
+	flag.Parse()
 
-    flag.IntVar(&side, "side", 1024, "side to be used when generating icon")
-    flag.StringVar(&bkgcString, "background", "f0f0f0", "background color of the icon in form of a hex string. e.x. 2ae9df")
-    flag.StringVar(&fgString, "color", "c75c93", "coloor of the icon")
-	flag.StringVar(&outFile, "file", "icon.png", "name of file for icon file")
-    flag.IntVar(&numSquares, "squares", 5, "number of squares for row and column")
-    flag.IntVar(&padding, "padding", 12, "amount of padding, in pixels, for the icon")
-    flag.Parse()
+	fmt.Printf("Background color: '%s'\n", *rgbaValue)
 
-    background, _ := hexcolor.HexRgb24BitToColor(bkgcString)
-    color, _ := hexcolor.HexRgb24BitToColor(fgString)
-	f1, _ := os.OpenFile(outFile, os.O_CREATE | os.O_WRONLY, 0644)
+	backgroundColor, err := rgbaValueToColor(rgbaValue)
+	if err != nil {
+		// there isn't much I can do here, anyway this is mostly just for me anyway
+		panic(err)
+	}
+	fmt.Printf("Using color %+v for the background\n", backgroundColor)
 
-    fmt.Println("--- Icon Generator ---")
-    fmt.Printf("side: %d\n", side)
-    fmt.Printf("Background: %t\n", background)
-    fmt.Printf("Color: %t\n", color)
-    fmt.Printf("f1: %t\n", f1)
-    fmt.Printf("squares: %t\n", numSquares)
-    fmt.Printf("padding: %t\n", padding)
+}
+
+func rgbaValueToColor(rgbaValue *string) (color.Color, error) {
+	rgbaArrayValue := strings.Split(*rgbaValue, ",")
+	if len(rgbaArrayValue) != 3 && len(rgbaArrayValue) != 4 {
+		return nil, fmt.Errorf("There shoudl be 3 for 4 values, found '%d' instead", len(rgbaArrayValue))
+	}
+	rgbaArray := make([]uint8, 0, 0)
+	for _, value := range rgbaArrayValue {
+		part, err := strconv.ParseUint(value, 10, 8)
+		if err != nil {
+			return nil, fmt.Errorf("Could cast '%s' into an int8", value)
+		}
+		rgbaArray = append(rgbaArray, uint8(part))
+	}
+	if len(rgbaArray) == 3 {
+		rgbaArray = append(rgbaArray, 255)
+	}
+	return color.RGBA{
+		R: rgbaArray[0],
+		G: rgbaArray[1],
+		B: rgbaArray[2],
+		A: rgbaArray[3],
+	}, nil
 }
