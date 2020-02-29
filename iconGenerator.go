@@ -1,22 +1,22 @@
 package main
 
 import (
+	"encoding/hex"
+	"errors"
 	"flag"
 	"fmt"
 	"image/color"
-	"strconv"
-	"strings"
 )
 
 func main() {
 	fmt.Println("Icon Generator start")
 
-	rgbaValue := flag.String("background", "240,240,240", "The value for the background color, in quotes comma seperated 3 or 4 values, between 0-255")
+	hexColor := flag.String("background", "f0f0f0", "Should be a hex string, can include alpha value")
 	flag.Parse()
 
-	fmt.Printf("Background color: '%s'\n", *rgbaValue)
+	fmt.Printf("Background color: '%s'\n", *hexColor)
 
-	backgroundColor, err := rgbaValueToColor(rgbaValue)
+	backgroundColor, err := rgbaValueToColor(hexColor)
 	if err != nil {
 		// there isn't much I can do here, anyway this is mostly just for me anyway
 		panic(err)
@@ -25,19 +25,16 @@ func main() {
 
 }
 
-func rgbaValueToColor(rgbaValue *string) (color.Color, error) {
-	rgbaArrayValue := strings.Split(*rgbaValue, ",")
-	if len(rgbaArrayValue) != 3 && len(rgbaArrayValue) != 4 {
-		return nil, fmt.Errorf("There shoudl be 3 for 4 values, found '%d' instead", len(rgbaArrayValue))
+func rgbaValueToColor(hexColor *string) (color.Color, error) {
+	rgbaArray, err := hex.DecodeString(*hexColor)
+	if err != nil {
+		return nil, err
 	}
-	rgbaArray := make([]uint8, 0, 0)
-	for _, value := range rgbaArrayValue {
-		part, err := strconv.ParseUint(value, 10, 8)
-		if err != nil {
-			return nil, fmt.Errorf("Could cast '%s' into an int8", value)
-		}
-		rgbaArray = append(rgbaArray, uint8(part))
+
+	if len(rgbaArray) != 3 && len(rgbaArray) != 4 {
+		return nil, errors.New("The hex value given was too big")
 	}
+
 	if len(rgbaArray) == 3 {
 		rgbaArray = append(rgbaArray, 255)
 	}
