@@ -23,15 +23,20 @@ func main() {
 
 	fmt.Printf("Background color: '%s'\n", *hexColor)
 
-	backgroundColor, err := hexToColor(hexColor)
+	backgroundColor, err := hexToColor(*hexColor)
 	if err != nil {
 		// there isn't much I can do here, anyway this is mostly just for me anyway
 		panic(err)
 	}
+	mainColor, err := hexToColor("00add8")
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Printf("Using color %+v for the background\n", backgroundColor)
 
 	img := initialImage(backgroundColor)
-	img = changeImage(10, 10, 100, 100, color.RGBA{224, 29, 33, 255}, img)
+	img = changeImage(10, 10, 100, 100, mainColor, img)
 
 	// write the icon out
 	// playing with jpg and comparing against png
@@ -43,14 +48,14 @@ func main() {
 	}
 	png.Encode(f1, img)
 	var opt jpeg.Options
-	opt.Quality = 83
+	opt.Quality = 43
 	jpeg.Encode(f2, img, &opt)
 
 }
 
-func hexToColor(hexColor *string) (color.RGBA, error) {
+func hexToColor(hexColor string) (color.RGBA, error) {
 	nilRGBA := color.RGBA{0, 0, 0, 0}
-	rgbaArray, err := hex.DecodeString(*hexColor)
+	rgbaArray, err := hex.DecodeString(hexColor)
 	if err != nil {
 		return nilRGBA, err
 	}
