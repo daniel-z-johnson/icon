@@ -10,16 +10,26 @@ import (
 	"image/draw"
 	"image/jpeg"
 	"image/png"
+	"math/rand"
 	"os"
+	"time"
 )
 
-// icon will be 500 x 500
+// default icon will be 740 x 740
 // boarder of 10
+// 740 because 720 is a highly composie number
 func main() {
 	fmt.Println("Icon Generator start")
+	var iconSize int
+	var sections int
 
-	hexColor := flag.String("background", "a0a0a0", "Should be a hex string, can include alpha value")
+	hexColor := flag.String("background", "707070", "Should be a hex string, can include alpha value")
+	flag.IntVar(&iconSize, "iconSize", 720, "size of the icon, icons generated will be square")
+	flag.IntVar(&sections, "sections", 6, "Number of sections per side")
 	flag.Parse()
+	stepSize := (iconSize - 20) / sections
+
+	rand.Seed(time.Now().Unix())
 
 	fmt.Printf("Background color: '%s'\n", *hexColor)
 
@@ -35,8 +45,14 @@ func main() {
 
 	fmt.Printf("Using color %+v for the background\n", backgroundColor)
 
-	img := initialImage(backgroundColor)
-	img = changeImage(10, 10, 100, 100, mainColor, img)
+	img := initialImage(iconSize, backgroundColor)
+	for x := 10; x < iconSize-10-stepSize; x += stepSize {
+		for y := 10; y < iconSize-10-stepSize; y += stepSize {
+			if rand.Int()%2 == 0 {
+				img = changeImage(x, y, x+stepSize, y+stepSize, mainColor, img)
+			}
+		}
+	}
 
 	// write the icon out
 	// playing with jpg and comparing against png
@@ -48,7 +64,7 @@ func main() {
 	}
 	png.Encode(f1, img)
 	var opt jpeg.Options
-	opt.Quality = 43
+	opt.Quality = 17
 	jpeg.Encode(f2, img, &opt)
 
 }
@@ -76,11 +92,11 @@ func hexToColor(hexColor string) (color.RGBA, error) {
 }
 
 // initialImage icon for now will be 500 by 500
-func initialImage(bg color.RGBA) draw.Image {
-	img := image.NewRGBA(image.Rect(0, 0, 500, 500))
+func initialImage(iconSize int, bg color.RGBA) draw.Image {
+	img := image.NewRGBA(image.Rect(0, 0, iconSize, iconSize))
 
-	for x := 0; x < 500; x++ {
-		for y := 0; y < 500; y++ {
+	for x := 0; x < iconSize; x++ {
+		for y := 0; y < iconSize; y++ {
 			img.SetRGBA(x, y, bg)
 		}
 	}
