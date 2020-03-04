@@ -24,7 +24,7 @@ func main() {
 	var sections int
 
 	hexColor := flag.String("background", "707070", "Should be a hex string, can include alpha value")
-	flag.IntVar(&iconSize, "iconSize", 720, "size of the icon, icons generated will be square")
+	flag.IntVar(&iconSize, "iconSize", 740, "size of the icon, icons generated will be square")
 	flag.IntVar(&sections, "sections", 6, "Number of sections per side")
 	flag.Parse()
 	stepSize := (iconSize - 20) / sections
@@ -46,8 +46,8 @@ func main() {
 	fmt.Printf("Using color %+v for the background\n", backgroundColor)
 
 	img := initialImage(iconSize, backgroundColor)
-	for x := 10; x < iconSize-10-stepSize; x += stepSize {
-		for y := 10; y < iconSize-10-stepSize; y += stepSize {
+	for x := 10; x < iconSize-10; x += stepSize {
+		for y := 10; y < iconSize-10; y += stepSize {
 			if rand.Int()%2 == 0 {
 				img = changeImage(x, y, x+stepSize, y+stepSize, mainColor, img)
 			}
@@ -64,7 +64,7 @@ func main() {
 	}
 	png.Encode(f1, img)
 	var opt jpeg.Options
-	opt.Quality = 17
+	opt.Quality = 11
 	jpeg.Encode(f2, img, &opt)
 
 }
