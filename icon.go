@@ -1,4 +1,4 @@
-package main
+package icon
 
 import (
 	"encoding/hex"
@@ -91,7 +91,6 @@ func hexToColor(hexColor string) (color.RGBA, error) {
 	}, nil
 }
 
-// initialImage icon for now will be 500 by 500
 func initialImage(iconSize int, bg color.RGBA) draw.Image {
 	img := image.NewRGBA(image.Rect(0, 0, iconSize, iconSize))
 
