@@ -69,3 +69,22 @@ func TestInitialImage(t *testing.T) {
 
 	assert.Equal(t, expected, actual)
 }
+
+func TestChangeImage(t *testing.T) {
+	expected := baseImage()
+	actual := baseImage()
+	rgba := color.RGBA{
+		R: 0x0f,
+		G: 0x0f,
+		B: 0xff,
+		A: 0xff,
+	}
+	expected.Set(0, 0, rgba)
+	expected.Set(0, 1, rgba)
+	expected.Set(1, 0, rgba)
+	expected.Set(1, 1, rgba)
+
+	changeImage(0, 0, 2, 2, rgba, actual)
+
+	assert.Equal(t, actual, expected)
+}
