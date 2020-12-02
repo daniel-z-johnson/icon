@@ -69,6 +69,15 @@ func main() {
 
 }
 
+func IconGen(iconSize, sections int, background, iconColor string, horzontal, vertical bool) (image.Image, error) {
+	bgColor, err := hexToColor(background)
+	if err != nil {
+		return nil, err
+	}
+	img := initialImage(iconSize, bgColor)
+	return img, err
+}
+
 func hexToColor(hexColor string) (color.RGBA, error) {
 	nilRGBA := color.RGBA{0, 0, 0, 0}
 	rgbaArray, err := hex.DecodeString(hexColor)
