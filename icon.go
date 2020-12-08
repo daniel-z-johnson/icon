@@ -17,7 +17,7 @@ import (
 
 // default icon will be 740 x 740
 // boarder of 10
-// 740 because 720 is a highly composie number
+// 740 because 720 is a highly composite number
 func main() {
 	fmt.Println("Icon Generator start")
 	var iconSize int
@@ -74,7 +74,19 @@ func IconGen(iconSize, sections int, background, iconColor string, horzontal, ve
 	if err != nil {
 		return nil, err
 	}
+	mainColor, err := hexToColor(iconColor)
+	if err != nil {
+		return nil, err
+	}
 	img := initialImage(iconSize, bgColor)
+	stepSize := (iconSize - 20) / sections
+	for x := 10; x < iconSize-10; x += stepSize {
+		for y := 10; y < iconSize-10; y += stepSize {
+			if rand.Int()%2 == 0 {
+				img = changeImage(x, y, x+stepSize, y+stepSize, mainColor, img)
+			}
+		}
+	}
 	return img, err
 }
 

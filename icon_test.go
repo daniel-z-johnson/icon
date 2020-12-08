@@ -4,6 +4,8 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"image/png"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -87,4 +89,11 @@ func TestChangeImage(t *testing.T) {
 	changeImage(0, 0, 2, 2, rgba, actual)
 
 	assert.Equal(t, actual, expected)
+}
+
+func TestIconGen(t *testing.T) {
+	icon, err := IconGen(720, 6,"0f0f0f", "f0f0f0", false, false)
+	assert.Nil(t, err)
+	f1, err := os.Create("icon.png")
+	png.Encode(f1, icon)
 }
