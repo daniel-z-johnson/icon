@@ -81,8 +81,16 @@ func IconGen(iconSize, sections int, background, iconColor string, horzontal, ve
 	}
 	img := initialImage(iconSize, bgColor)
 	stepSize := (iconSize - 20) / sections
-	for x := 10; x < iconSize-stepSize; x += stepSize {
-		for y := 10; y < iconSize-stepSize; y += stepSize {
+	maxX := iconSize - stepSize
+	if vertical {
+		maxX /= 2
+	}
+	maxY := iconSize - stepSize
+	if horzontal {
+		maxY /= 2
+	}
+	for x := 10; x < maxX; x += stepSize {
+		for y := 10; y < maxY; y += stepSize {
 			if rand.Int()%2 == 0 {
 				img = changeImage(x, y, x+stepSize, y+stepSize, mainColor, img)
 			}
