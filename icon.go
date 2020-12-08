@@ -70,6 +70,7 @@ func main() {
 }
 
 func IconGen(iconSize, sections int, background, iconColor string, horzontal, vertical bool) (image.Image, error) {
+	rand.Seed(time.Now().Unix())
 	bgColor, err := hexToColor(background)
 	if err != nil {
 		return nil, err
@@ -80,8 +81,8 @@ func IconGen(iconSize, sections int, background, iconColor string, horzontal, ve
 	}
 	img := initialImage(iconSize, bgColor)
 	stepSize := (iconSize - 20) / sections
-	for x := 10; x < iconSize-10; x += stepSize {
-		for y := 10; y < iconSize-10; y += stepSize {
+	for x := 10; x < iconSize-stepSize; x += stepSize {
+		for y := 10; y < iconSize-stepSize; y += stepSize {
 			if rand.Int()%2 == 0 {
 				img = changeImage(x, y, x+stepSize, y+stepSize, mainColor, img)
 			}

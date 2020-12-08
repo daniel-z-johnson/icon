@@ -92,7 +92,7 @@ func TestChangeImage(t *testing.T) {
 }
 
 func TestIconGen(t *testing.T) {
-	icon, err := IconGen(720, 6,"0f0f0f", "f0f0f0", false, false)
+	icon, err := IconGen(720, 12,"aaaaaa", "0000a0", false, false)
 	assert.Nil(t, err)
 	f1, err := os.Create("icon.png")
 	png.Encode(f1, icon)
