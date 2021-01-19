@@ -96,6 +96,22 @@ func IconGen(iconSize, sections int, background, iconColor string, horizontal, v
 			}
 		}
 	}
+
+	for x := 0; x <= maxX + stepSize; x++ {
+		for y := 0; y <= maxY + stepSize; y++ {
+			c := img.At(x, y)
+			if horizontal {
+				img.Set(x, iconSize - y, c)
+			}
+			if vertical {
+				img.Set(iconSize - x, y, c)
+			}
+			if horizontal && vertical {
+				img.Set(iconSize - x, iconSize - y, c)
+			}
+		}
+	}
+
 	return img, err
 }
 
