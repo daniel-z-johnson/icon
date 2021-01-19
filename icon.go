@@ -69,7 +69,7 @@ func main() {
 
 }
 
-func IconGen(iconSize, sections int, background, iconColor string, horzontal, vertical bool) (image.Image, error) {
+func IconGen(iconSize, sections int, background, iconColor string, horizontal, vertical bool) (image.Image, error) {
 	rand.Seed(time.Now().Unix())
 	bgColor, err := hexToColor(background)
 	if err != nil {
@@ -86,7 +86,7 @@ func IconGen(iconSize, sections int, background, iconColor string, horzontal, ve
 		maxX /= 2
 	}
 	maxY := iconSize - stepSize
-	if horzontal {
+	if horizontal {
 		maxY /= 2
 	}
 	for x := 10; x < maxX; x += stepSize {
