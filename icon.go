@@ -3,71 +3,12 @@ package icon
 import (
 	"encoding/hex"
 	"errors"
-	"flag"
-	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
-	"image/jpeg"
-	"image/png"
 	"math/rand"
-	"os"
 	"time"
 )
-
-// default icon will be 740 x 740
-// boarder of 10
-// 740 because 720 is a highly composite number
-func main() {
-	fmt.Println("Icon Generator start")
-	var iconSize int
-	var sections int
-
-	hexColor := flag.String("background", "707070", "Should be a hex string, can include alpha value")
-	flag.IntVar(&iconSize, "iconSize", 740, "size of the icon, icons generated will be square")
-	flag.IntVar(&sections, "sections", 6, "Number of sections per side")
-	flag.Parse()
-	stepSize := (iconSize - 20) / sections
-
-	rand.Seed(time.Now().Unix())
-
-	fmt.Printf("Background color: '%s'\n", *hexColor)
-
-	backgroundColor, err := hexToColor(*hexColor)
-	if err != nil {
-		// there isn't much I can do here, anyway this is mostly just for me anyway
-		panic(err)
-	}
-	mainColor, err := hexToColor("00add8")
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Using color %+v for the background\n", backgroundColor)
-
-	img := initialImage(iconSize, backgroundColor)
-	for x := 10; x < iconSize-10; x += stepSize {
-		for y := 10; y < iconSize-10; y += stepSize {
-			if rand.Int()%2 == 0 {
-				img = changeImage(x, y, x+stepSize, y+stepSize, mainColor, img)
-			}
-		}
-	}
-
-	// write the icon out
-	// playing with jpg and comparing against png
-	f1, err := os.Create("icon.png")
-	f2, err2 := os.Create("icon.jpg")
-	if err != nil || err2 != nil {
-		// can do nothing but panic, sorry
-		panic(err)
-	}
-	png.Encode(f1, img)
-	var opt jpeg.Options
-	opt.Quality = 11
-	jpeg.Encode(f2, img, &opt)
-
-}
 
 func IconGen(iconSize, sections int, background, iconColor string, horizontal, vertical bool) (image.Image, error) {
 	rand.Seed(time.Now().Unix())
