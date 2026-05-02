@@ -2,7 +2,7 @@ package icon
 
 import (
 	"encoding/hex"
-	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -36,17 +36,21 @@ func IconGen(iconSize, sections int, background, iconColor string, horizontal, v
 		}
 	}
 
-	for x := 0; x <= maxX+stepSize; x++ {
-		for y := 0; y <= maxY+stepSize; y++ {
+	if !horizontal && !vertical {
+		return img, nil
+	}
+
+	for x := 0; x < minInt(maxX+stepSize, iconSize); x++ {
+		for y := 0; y < minInt(maxY+stepSize, iconSize); y++ {
 			c := img.At(x, y)
 			if horizontal {
-				img.Set(x, iconSize-y, c)
+				img.Set(x, iconSize-1-y, c)
 			}
 			if vertical {
-				img.Set(iconSize-x, y, c)
+				img.Set(iconSize-1-x, y, c)
 			}
 			if horizontal && vertical {
-				img.Set(iconSize-x, iconSize-y, c)
+				img.Set(iconSize-1-x, iconSize-1-y, c)
 			}
 		}
 	}
@@ -54,15 +58,22 @@ func IconGen(iconSize, sections int, background, iconColor string, horizontal, v
 	return img, err
 }
 
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func hexToColor(hexColor string) (color.RGBA, error) {
 	nilRGBA := color.RGBA{0, 0, 0, 0}
-	rgbaArray, err := hex.DecodeString(hexColor)
-	if err != nil {
-		return nilRGBA, err
+	if len(hexColor) != 6 && len(hexColor) != 8 {
+		return nilRGBA, fmt.Errorf("hex color must be 6 or 8 characters, got %d", len(hexColor))
 	}
 
-	if len(rgbaArray) != 3 && len(rgbaArray) != 4 {
-		return nilRGBA, errors.New("The hex value given was too big")
+	rgbaArray, err := hex.DecodeString(hexColor)
+	if err != nil {
+		return nilRGBA, fmt.Errorf("invalid hex color %q: %w", hexColor, err)
 	}
 
 	if len(rgbaArray) == 3 {
