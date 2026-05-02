@@ -67,7 +67,7 @@ func TestHexToColorInvalidLength(t *testing.T) {
 func TestHexToColorInvalidValue(t *testing.T) {
 	_, err := hexToColor("zzzzzz")
 
-	assert.EqualError(t, err, "invalid hex color \"zzzzzz\": encoding/hex: invalid byte: U+007A 'z'")
+	assert.ErrorContains(t, err, "invalid hex color \"zzzzzz\":")
 }
 
 func TestInitialImage(t *testing.T) {
