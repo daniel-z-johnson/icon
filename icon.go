@@ -6,12 +6,10 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"math/rand"
-	"time"
+	"math/rand/v2"
 )
 
 func IconGen(iconSize, sections int, background, iconColor string, horizontal, vertical bool) (image.Image, error) {
-	rand.Seed(time.Now().Unix())
 	bgColor, err := hexToColor(background)
 	if err != nil {
 		return nil, err
@@ -32,23 +30,23 @@ func IconGen(iconSize, sections int, background, iconColor string, horizontal, v
 	}
 	for x := 10; x < maxX; x += stepSize {
 		for y := 10; y < maxY; y += stepSize {
-			if rand.Int()%2 == 0 {
+			if rand.IntN(2) == 0 {
 				img = changeImage(x, y, x+stepSize, y+stepSize, mainColor, img)
 			}
 		}
 	}
 
-	for x := 0; x <= maxX + stepSize; x++ {
-		for y := 0; y <= maxY + stepSize; y++ {
+	for x := 0; x <= maxX+stepSize; x++ {
+		for y := 0; y <= maxY+stepSize; y++ {
 			c := img.At(x, y)
 			if horizontal {
-				img.Set(x, iconSize - y, c)
+				img.Set(x, iconSize-y, c)
 			}
 			if vertical {
-				img.Set(iconSize - x, y, c)
+				img.Set(iconSize-x, y, c)
 			}
 			if horizontal && vertical {
-				img.Set(iconSize - x, iconSize - y, c)
+				img.Set(iconSize-x, iconSize-y, c)
 			}
 		}
 	}
