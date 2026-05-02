@@ -9,6 +9,7 @@ import (
 	"math/rand/v2"
 )
 
+// IconGen returns a square image with width and height equal to iconSize.
 func IconGen(iconSize, sections int, background, iconColor string, horizontal, vertical bool) (image.Image, error) {
 	bgColor, err := hexToColor(background)
 	if err != nil {

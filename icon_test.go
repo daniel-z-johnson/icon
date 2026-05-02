@@ -103,6 +103,14 @@ func TestChangeImage(t *testing.T) {
 	assert.Equal(t, actual, expected)
 }
 
+func TestIconGenReturnsSquareImage(t *testing.T) {
+	icon, err := IconGen(64, 4, "aaaaaa", "0000a0", false, false)
+
+	assert.Nil(t, err)
+	assert.Equal(t, image.Rect(0, 0, 64, 64), icon.Bounds())
+	assert.Equal(t, icon.Bounds().Dx(), icon.Bounds().Dy())
+}
+
 func TestIconGenMirrorsWithinBounds(t *testing.T) {
 	icon, err := IconGen(40, 4, "aaaaaa", "0000a0", true, true)
 
