@@ -1,110 +1,170 @@
 package icon
 
 import (
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
 	"math/rand/v2"
+	"strings"
 )
 
-// IconGen returns a square image with width and height equal to iconSize.
-func IconGen(iconSize, sections int, background, iconColor string, horizontal, vertical bool) (image.Image, error) {
-	bgColor, err := hexToColor(background)
-	if err != nil {
-		return nil, err
-	}
-	mainColor, err := hexToColor(iconColor)
-	if err != nil {
-		return nil, err
-	}
-	img := initialImage(iconSize, bgColor)
-	stepSize := (iconSize - 20) / sections
-	maxX := iconSize - stepSize
-	if vertical {
-		maxX /= 2
-	}
-	maxY := iconSize - stepSize
-	if horizontal {
-		maxY /= 2
-	}
-	for x := 10; x < maxX; x += stepSize {
-		for y := 10; y < maxY; y += stepSize {
-			if rand.IntN(2) == 0 {
-				img = changeImage(x, y, x+stepSize, y+stepSize, mainColor, img)
-			}
-		}
-	}
+// marginDivisor sets the empty border around the pattern as a fraction of the
+// icon size: each side gets Size/marginDivisor pixels (10px at 720px).
+const marginDivisor = 72
 
-	if !horizontal && !vertical {
-		return img, nil
-	}
-
-	for x := 0; x < minInt(maxX+stepSize, iconSize); x++ {
-		for y := 0; y < minInt(maxY+stepSize, iconSize); y++ {
-			c := img.At(x, y)
-			if horizontal {
-				img.Set(x, iconSize-1-y, c)
-			}
-			if vertical {
-				img.Set(iconSize-1-x, y, c)
-			}
-			if horizontal && vertical {
-				img.Set(iconSize-1-x, iconSize-1-y, c)
-			}
-		}
-	}
-
-	return img, err
+// Options describes an icon. Colors are hex strings: "rgb", "rgba",
+// "rrggbb" or "rrggbbaa", with or without a leading "#".
+type Options struct {
+	Size       int    // width and height in pixels
+	Sections   int    // grid cells per side
+	Background string // background color
+	Color      string // icon color
+	MirrorX    bool   // mirror left to right
+	MirrorY    bool   // mirror top to bottom
+	Seed       string // if set, hashed so the same seed gives the same icon; if empty, random
 }
 
-func minInt(a, b int) int {
-	if a < b {
-		return a
+// Generate returns a square icon described by opts.
+func Generate(opts Options) (image.Image, error) {
+	if opts.Sections < 1 {
+		return nil, fmt.Errorf("sections must be at least 1, got %d", opts.Sections)
 	}
-	return b
+	margin := opts.Size / marginDivisor
+	stepSize := (opts.Size - 2*margin) / opts.Sections
+	if stepSize < 1 {
+		return nil, fmt.Errorf("icon size %d is too small for %d sections", opts.Size, opts.Sections)
+	}
+	bgColor, err := hexToColor(opts.Background)
+	if err != nil {
+		return nil, fmt.Errorf("background: %w", err)
+	}
+	mainColor, err := hexToColor(opts.Color)
+	if err != nil {
+		return nil, fmt.Errorf("color: %w", err)
+	}
+
+	grid := pattern(source(opts.Seed), opts.Sections, opts.MirrorX, opts.MirrorY)
+
+	// Center the grid so any leftover pixels are split between both sides.
+	offset := (opts.Size - stepSize*opts.Sections) / 2
+
+	img := image.NewRGBA(image.Rect(0, 0, opts.Size, opts.Size))
+	fillRect(img, img.Bounds(), bgColor)
+	for i := range opts.Sections {
+		x0, x1 := cellRange(i, opts.Sections, stepSize, offset, opts.Size, opts.MirrorX)
+		for j := range opts.Sections {
+			if !grid[i][j] {
+				continue
+			}
+			y0, y1 := cellRange(j, opts.Sections, stepSize, offset, opts.Size, opts.MirrorY)
+			fillRect(img, image.Rect(x0, y0, x1, y1), mainColor)
+		}
+	}
+	return img, nil
+}
+
+// source returns a random source, seeded from a SHA-256 hash of seed when
+// seed is not empty.
+func source(seed string) rand.Source {
+	if seed == "" {
+		return rand.NewPCG(rand.Uint64(), rand.Uint64())
+	}
+	sum := sha256.Sum256([]byte(seed))
+	return rand.NewPCG(binary.LittleEndian.Uint64(sum[:8]), binary.LittleEndian.Uint64(sum[8:16]))
+}
+
+// pattern decides which cells are filled. Cells on a mirrored half copy their
+// counterpart, so only the canonical half (or quadrant) is random.
+func pattern(src rand.Source, n int, mirrorX, mirrorY bool) [][]bool {
+	bits := bitReader{src: src}
+	grid := make([][]bool, n)
+	for i := range grid {
+		grid[i] = make([]bool, n)
+	}
+	for i := range n {
+		for j := range n {
+			ci, cj := i, j
+			if mirrorX {
+				ci = min(i, n-1-i)
+			}
+			if mirrorY {
+				cj = min(j, n-1-j)
+			}
+			if ci == i && cj == j {
+				grid[i][j] = bits.next()
+			} else {
+				// The canonical cell has smaller indices, so it is already set.
+				grid[i][j] = grid[ci][cj]
+			}
+		}
+	}
+	return grid
+}
+
+// cellRange returns the pixel span [lo, hi) of cell i along one axis. On a
+// mirrored axis, cells in the second half are exact pixel mirrors of the first
+// half and a middle cell (odd n) stretches to stay symmetric about the center.
+func cellRange(i, n, step, offset, size int, mirrored bool) (lo, hi int) {
+	m := n - 1 - i
+	if mirrored && i > m {
+		return size - (offset + (m+1)*step), size - (offset + m*step)
+	}
+	lo = offset + i*step
+	hi = lo + step
+	if mirrored && i == m {
+		hi = size - lo
+	}
+	return lo, hi
+}
+
+// bitReader hands out random bits one at a time. Pulling raw bits from the
+// source (rather than rand.Rand helpers) keeps seeded output stable.
+type bitReader struct {
+	src  rand.Source
+	buf  uint64
+	left int
+}
+
+func (b *bitReader) next() bool {
+	if b.left == 0 {
+		b.buf = b.src.Uint64()
+		b.left = 64
+	}
+	bit := b.buf&1 == 1
+	b.buf >>= 1
+	b.left--
+	return bit
 }
 
 func hexToColor(hexColor string) (color.RGBA, error) {
-	nilRGBA := color.RGBA{0, 0, 0, 0}
-	if len(hexColor) != 6 && len(hexColor) != 8 {
-		return nilRGBA, fmt.Errorf("hex color must be 6 or 8 characters, got %d", len(hexColor))
+	h := strings.TrimPrefix(hexColor, "#")
+	switch len(h) {
+	case 3, 4: // shorthand: "fa0" means "ffaa00"
+		long := make([]byte, 0, 2*len(h))
+		for i := range len(h) {
+			long = append(long, h[i], h[i])
+		}
+		h = string(long)
+	case 6, 8:
+	default:
+		return color.RGBA{}, fmt.Errorf("hex color must be 3, 4, 6 or 8 characters, got %d", len(h))
 	}
 
-	rgbaArray, err := hex.DecodeString(hexColor)
+	rgba, err := hex.DecodeString(h)
 	if err != nil {
-		return nilRGBA, fmt.Errorf("invalid hex color %q: %w", hexColor, err)
+		return color.RGBA{}, fmt.Errorf("invalid hex color %q: %w", hexColor, err)
 	}
 
-	if len(rgbaArray) == 3 {
-		rgbaArray = append(rgbaArray, 255)
+	if len(rgba) == 3 {
+		rgba = append(rgba, 255)
 	}
-	return color.RGBA{
-		R: rgbaArray[0],
-		G: rgbaArray[1],
-		B: rgbaArray[2],
-		A: rgbaArray[3],
-	}, nil
+	return color.RGBA{R: rgba[0], G: rgba[1], B: rgba[2], A: rgba[3]}, nil
 }
 
-func initialImage(iconSize int, bg color.RGBA) draw.Image {
-	img := image.NewRGBA(image.Rect(0, 0, iconSize, iconSize))
-
-	for x := 0; x < iconSize; x++ {
-		for y := 0; y < iconSize; y++ {
-			img.SetRGBA(x, y, bg)
-		}
-	}
-
-	return img
-}
-
-func changeImage(x0, y0, x1, y1 int, color color.RGBA, img draw.Image) draw.Image {
-	for x := x0; x < x1; x++ {
-		for y := y0; y < y1; y++ {
-			img.Set(x, y, color)
-		}
-	}
-	return img
+func fillRect(img draw.Image, r image.Rectangle, c color.Color) {
+	draw.Draw(img, r, image.NewUniform(c), image.Point{}, draw.Src)
 }
