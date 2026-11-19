@@ -32,8 +32,14 @@ func ExampleGenerate() {
 
 func ExampleGenerate_seed() {
 	opts := icon.Options{Size: 64, Sections: 6, Background: "aaa", Color: "00a", MirrorX: true, Seed: "alice"}
-	a, _ := icon.Generate(opts)
-	b, _ := icon.Generate(opts)
+	a, err := icon.Generate(opts)
+	if err != nil {
+		log.Fatal(err)
+	}
+	b, err := icon.Generate(opts)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	same := true
 	for x := range 64 {
